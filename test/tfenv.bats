@@ -57,8 +57,8 @@ load test_helper
   run tfenv echo -F: "PATH"
   assert_success
   assert_line 0 "${BATS_TEST_DIRNAME%/*}/libexec"
-  assert_line 1 "${TFENV_ROOT}/plugins/terraform-build/bin"
-  assert_line 2 "${TFENV_ROOT}/plugins/tfenv-each/bin"
+  assert_line 1 "${TFENV_ROOT}/plugins/tfenv-each/bin"
+  assert_line 2 "${TFENV_ROOT}/plugins/terraform-build/bin"
 }
 
 @test "TFENV_HOOK_PATH preserves value from environment" {
