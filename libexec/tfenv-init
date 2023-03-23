@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# Summary: Configure the shell environment for tfenv
+# Usage: eval "$(tfenv init - [--no-rehash] [<shell>])"
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  echo -
+  echo --no-rehash
+  echo bash
+  echo fish
+  echo ksh
+  echo zsh
+  exit
+fi
+
+print=""
+no_rehash=""
+for args in "$@"
+do
+  if [ "$args" = "-" ]; then
+    print=1
+    shift
+  fi
+
+  if [ "$args" = "--no-rehash" ]; then
+    no_rehash=1
+    shift
+  fi
+done
+
+shell="$1"
+if [ -z "$shell" ]; then
+  shell="$(ps -p "$PPID" -o 'args=' 2>/dev/null || true)"
+  shell="${shell%% *}"
+  shell="${shell##-}"
+  shell="${shell:-$SHELL}"
+  shell="${shell##*/}"
+  shell="${shell%%-*}"
+fi
+
+root="${BASH_SOURCE:-$0}"
+root="${root%/*}"
+root="${root%/*}"
+
+tfenv_in_path=true
+if [ -n "$TFENV_ORIG_PATH" ]; then
+  PATH="$TFENV_ORIG_PATH" type -P tfenv >/dev/null || tfenv_in_path=""
+fi
+
+if [ -z "$print" ]; then
+  case "$shell" in
+  bash )
+    if [ -f "${HOME}/.bashrc" ] && [ ! -f "${HOME}/.bash_profile" ]; then
+      profile='~/.bashrc'
+    else
+      profile='~/.bash_profile'
+    fi
+    ;;
+  zsh )
+    profile='~/.zshrc'
+    ;;
+  ksh )
+    profile='~/.profile'
+    ;;
+  fish )
+    profile='~/.config/fish/config.fish'
+    ;;
+  * )
+    profile='your profile'
+    ;;
+  esac
+
+  tfenv_command=tfenv
+  if [ -z "$tfenv_in_path" ]; then
+    tfenv_command="$root/bin/tfenv"
+    tfenv_command="${tfenv_command/$HOME\//~/}"
+  fi
+
+  { echo "# Please add the following line to your \`${profile}' file,"
+    echo "# then restart your terminal."
+    echo
+    [ -t 2 ] && printf '\e[33;1m'
+    case "$shell" in
+    fish )
+      printf 'status --is-interactive; and %s init - fish | source' "$tfenv_command"
+      ;;
+    * )
+      # shellcheck disable=SC2016
+      printf 'eval "$(%s init - %s)"' "$tfenv_command" "$shell"
+      ;;
+    esac
+    [ -t 2 ] && printf '\e[m'
+    echo
+    echo
+  } >&2
+
+  exit 1
+fi
+
+mkdir -p "${TFENV_ROOT}/"{shims,versions}
+
+case "$shell" in
+fish )
+  [ -n "$tfenv_in_path" ] || printf "set -gx PATH '%s/bin' \$PATH\n" "$root"
+  printf "set -gx PATH '%s/shims' \$PATH\n" "$TFENV_ROOT"
+  printf 'set -gx TFENV_SHELL %s\n' "$shell"
+;;
+* )
+  # shellcheck disable=SC2016
+  [ -n "$tfenv_in_path" ] || printf 'export PATH="%s/bin:${PATH}"\n' "$root"
+  # shellcheck disable=SC2016
+  printf 'export PATH="%s/shims:${PATH}"\n' "$TFENV_ROOT"
+  printf 'export TFENV_SHELL=%s\n' "$shell"
+
+  completion="${root}/completions/tfenv.${shell}"
+  if [ -r "$completion" ]; then
+    printf "source '%s'\n" "$completion"
+  fi
+;;
+esac
+
+if [ -z "$no_rehash" ]; then
+  echo 'command tfenv rehash 2>/dev/null'
+fi
+
+IFS=$'\n' read -d '' -r -a commands <<<"$(tfenv-commands --sh)" || true
+
+case "$shell" in
+fish )
+  cat <<EOS
+function tfenv
+  set command \$argv[1]
+  set -e argv[1]
+
+  switch "\$command"
+  case ${commands[*]}
+    tfenv "sh-\$command" \$argv|source
+  case '*'
+    command tfenv "\$command" \$argv
+  end
+end
+EOS
+  ;;
+ksh )
+  cat <<EOS
+function tfenv {
+  typeset command
+EOS
+  ;;
+* )
+  cat <<EOS
+tfenv() {
+  local command
+EOS
+  ;;
+esac
+
+if [ "$shell" != "fish" ]; then
+IFS="|"
+cat <<EOS
+  command="\${1:-}"
+  if [ "\$#" -gt 0 ]; then
+    shift
+  fi
+
+  case "\$command" in
+  ${commands[*]})
+    eval "\$(tfenv "sh-\$command" "\$@")";;
+  *)
+    command tfenv "\$command" "\$@";;
+  esac
+}
+EOS
+fi

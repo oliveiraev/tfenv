@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the local application-specific Terraform version
+#
+# Usage: tfenv local <version>
+#        tfenv local --unset
+#
+# Sets the local application-specific Terraform version by writing the
+# version name to a file named `.terraform-version'.
+#
+# When you run a Terraform command, tfenv will look for a `.terraform-version'
+# file in the current directory and each parent directory. If no such
+# file is found in the tree, tfenv will use the global Terraform version
+# specified with `tfenv global'. A version specified with the
+# `TFENV_VERSION' environment variable takes precedence over local
+# and global versions.
+#
+# <version> should be a string matching a Terraform version known to tfenv.
+# The special version string `system' will use your default system Terraform.
+# Run `tfenv versions' for a list of available Terraform versions.
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  echo --unset
+  echo system
+  exec tfenv-versions --bare
+fi
+
+TFENV_VERSION="$1"
+
+if [ "$TFENV_VERSION" = "--unset" ]; then
+  rm -f .terraform-version
+elif [ -n "$TFENV_VERSION" ]; then
+  tfenv-version-file-write .terraform-version "$TFENV_VERSION"
+else
+  if version_file="$(tfenv-version-file "$PWD")"; then
+    tfenv-version-file-read "$version_file"
+  else
+    echo "tfenv: no local version configured for this directory" >&2
+    exit 1
+  fi
+fi

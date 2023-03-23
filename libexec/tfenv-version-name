@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Summary: Show the current Terraform version
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+if [ -z "$TFENV_VERSION" ]; then
+  TFENV_VERSION_FILE="$(tfenv-version-file)"
+  TFENV_VERSION="$(tfenv-version-file-read "$TFENV_VERSION_FILE" || true)"
+fi
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tfenv-hooks version-name)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+if [ -z "$TFENV_VERSION" ] || [ "$TFENV_VERSION" = "system" ]; then
+  echo "system"
+  exit
+fi
+
+version_exists() {
+  local version="$1"
+  [ -d "${TFENV_ROOT}/versions/${version}" ]
+}
+
+if version_exists "$TFENV_VERSION"; then
+  echo "$TFENV_VERSION"
+elif version_exists "${TFENV_VERSION#terraform-}"; then
+  echo "${TFENV_VERSION#terraform-}"
+else
+  echo "tfenv: version \`$TFENV_VERSION' is not installed (set by $(tfenv-version-origin))" >&2
+  exit 1
+fi

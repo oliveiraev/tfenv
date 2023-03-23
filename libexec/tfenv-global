@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the global Terraform version
+#
+# Usage: tfenv global <version>
+#
+# Sets the global Terraform version. You can override the global version at
+# any time by setting a directory-specific version with `tfenv local'
+# or by setting the `TFENV_VERSION' environment variable.
+#
+# <version> should be a string matching a Terraform version known to tfenv.
+# The special version string `system' will use your default system Terraform.
+# Run `tfenv versions' for a list of available Terraform versions.
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec tfenv-versions --bare
+fi
+
+TFENV_VERSION="$1"
+TFENV_VERSION_FILE="${TFENV_ROOT}/version"
+
+if [ -n "$TFENV_VERSION" ]; then
+  tfenv-version-file-write "$TFENV_VERSION_FILE" "$TFENV_VERSION"
+else
+  tfenv-version-file-read "$TFENV_VERSION_FILE" || echo system
+fi

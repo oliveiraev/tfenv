@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  exec tfenv-rehash --complete
+fi
+
+shell="$(basename "${TFENV_SHELL:-$SHELL}")"
+
+# When tfenv shell integration is enabled, delegate to tfenv-rehash,
+# then tell the shell to empty its command lookup cache.
+tfenv-rehash
+
+case "$shell" in
+fish )
+  # no rehash support
+  ;;
+* )
+  echo "hash -r 2>/dev/null || true"
+  ;;
+esac

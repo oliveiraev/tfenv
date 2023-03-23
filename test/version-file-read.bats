@@ -3,41 +3,41 @@
 load test_helper
 
 setup() {
-  mkdir -p "${RBENV_TEST_DIR}/myproject"
-  cd "${RBENV_TEST_DIR}/myproject"
+  mkdir -p "${TFENV_TEST_DIR}/myproject"
+  cd "${TFENV_TEST_DIR}/myproject"
 }
 
 @test "fails without arguments" {
-  run rbenv-version-file-read
+  run tfenv-version-file-read
   assert_failure ""
 }
 
 @test "fails for invalid file" {
-  run rbenv-version-file-read "non-existent"
+  run tfenv-version-file-read "non-existent"
   assert_failure ""
 }
 
 @test "fails for blank file" {
   echo > my-version
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_failure ""
 }
 
 @test "reads simple version file" {
   cat > my-version <<<"1.9.3"
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.9.3"
 }
 
 @test "ignores leading spaces" {
   cat > my-version <<<"  1.9.3"
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.9.3"
 }
 
 @test "reads only the first word from file" {
   cat > my-version <<<"1.9.3-p194@tag 1.8.7 hi"
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.9.3-p194@tag"
 }
 
@@ -46,7 +46,7 @@ setup() {
 1.8.7 one
 1.9.3 two
 IN
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.8.7"
 }
 
@@ -55,34 +55,34 @@ IN
 
 1.9.3
 IN
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.9.3"
 }
 
 @test "handles the file with no trailing newline" {
   echo -n "1.8.7" > my-version
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.8.7"
 }
 
 @test "ignores carriage returns" {
   cat > my-version <<< $'1.9.3\r'
-  run rbenv-version-file-read my-version
+  run tfenv-version-file-read my-version
   assert_success "1.9.3"
 }
 
 @test "prevents directory traversal" {
   cat > my-version <<<".."
-  run rbenv-version-file-read my-version
-  assert_failure "rbenv: invalid version in \`my-version'"
+  run tfenv-version-file-read my-version
+  assert_failure "tfenv: invalid version in \`my-version'"
 
   cat > my-version <<<"../foo"
-  run rbenv-version-file-read my-version
-  assert_failure "rbenv: invalid version in \`my-version'"
+  run tfenv-version-file-read my-version
+  assert_failure "tfenv: invalid version in \`my-version'"
 }
 
 @test "disallows path segments in version string" {
   cat > my-version <<<"foo/bar"
-  run rbenv-version-file-read my-version
-  assert_failure "rbenv: invalid version in \`my-version'"
+  run tfenv-version-file-read my-version
+  assert_failure "tfenv: invalid version in \`my-version'"
 }

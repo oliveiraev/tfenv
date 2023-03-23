@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Usage: tfenv version-file [<dir>]
+# Summary: Detect the file that sets the current tfenv version
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+target_dir="$1"
+
+find_local_version_file() {
+  local root="$1"
+  while ! [[ "$root" =~ ^//[^/]*$ ]]; do
+    if [ -s "${root}/.terraform-version" ]; then
+      echo "${root}/.terraform-version"
+      return 0
+    fi
+    [ -n "$root" ] || break
+    root="${root%/*}"
+  done
+  return 1
+}
+
+if [ -n "$target_dir" ]; then
+  find_local_version_file "$target_dir"
+else
+  find_local_version_file "$TFENV_DIR" || {
+    [ "$TFENV_DIR" != "$PWD" ] && find_local_version_file "$PWD"
+  } || echo "${TFENV_ROOT}/version"
+fi

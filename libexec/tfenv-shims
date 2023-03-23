@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Summary: List existing tfenv shims
+# Usage: tfenv shims [--short]
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  echo --short
+  exit
+fi
+
+shopt -s nullglob
+
+for command in "${TFENV_ROOT}/shims/"*; do
+  if [ "$1" = "--short" ]; then
+    echo "${command##*/}"
+  else
+    echo "$command"
+  fi
+done | sort

@@ -1,317 +1,171 @@
-# Seamlessly manage your app’s Ruby environment with rbenv.
+# Seamlessly manage your app’s Terraform environment with tfenv.
 
-rbenv is a version manager tool for the Ruby programming language on Unix-like systems. It is useful for switching between multiple Ruby versions on the same machine and for ensuring that each project you are working on always runs on the correct Ruby version.
+tfenv is a version manager tool for Terraform on Unix-like systems. It is useful for switching between multiple Terraform versions on the same machine and for ensuring that each project you are working on always runs on the correct Terraform version.
 
 ## How It Works
 
-After rbenv injects itself into your PATH at installation time, any invocation of `ruby`, `gem`, `bundler`, or other Ruby-related executable will first activate rbenv. Then, rbenv scans the current project directory for a file named `.ruby-version`. If found, that file determines the version of Ruby that should be used within that directory. Finally, rbenv looks up that Ruby version among those installed under `~/.rbenv/versions/`.
+After tfenv injects itself into your PATH at installation time, any invocation of `terraform` or other Terraform-related executable will first activate tfenv. Then, tfenv scans the current project directory for a file named `.terraform-version`. If found, that file determines the version of Terraform that should be used within that directory. Finally, tfenv looks up that Terraform version among those installed under `~/.tfenv/versions/`.
 
-You can choose the Ruby version for your project with, for example:
+You can choose the Terraform version for your project with, for example:
 ```sh
 cd myproject
-# choose Ruby version 3.1.2:
-rbenv local 3.1.2
+# choose Terraform version 1.4.2:
+tfenv local 1.4.2
 ```
 
-Doing so will create or update the `.ruby-version` file in the current directory with the version that you've chosen. A different project of yours that is another directory might be using a different version of Ruby altogether—rbenv will seamlessly transition from one Ruby version to another when you switch projects.
+Doing so will create or update the `.terraform-version` file in the current directory with the version that you've chosen. A different project of yours that is another directory might be using a different version of Terraform altogether—tfenv will seamlessly transition from one Terraform version to another when you switch projects.
 
-Finally, almost every aspect of rbenv's mechanism is [customizable via plugins][plugins] written in bash.
-
-The simplicity of rbenv has its benefits, but also some downsides. See the [comparison of version managers][alternatives] for more details and some alternatives.
+Finally, almost every aspect of tfenv's mechanism is plugins written in bash.
 
 ## Installation
 
-On systems with Homebrew package manager, the “Using Package Managers” method is recommended. On other systems, “Basic Git Checkout” might be the easiest way of ensuring that you are always installing the latest version of rbenv.
-
-### Using Package Managers
-
-1. Install rbenv using one of the following approaches.
-
-   #### Homebrew
-   
-   On macOS or Linux, we recommend installing rbenv with [Homebrew](https://brew.sh).
-   
-   ```sh
-   brew install rbenv ruby-build
-   ```
-   
-   #### Debian, Ubuntu, and their derivatives
-       
-   Note that the version of rbenv that is packaged and maintained in the
-   Debian and Ubuntu repositories is _out of date_. To install the latest
-   version, it is recommended to [install rbenv using git](#basic-git-checkout).
-   
-   ```sh
-   sudo apt install rbenv
-   ```
-   
-   #### Arch Linux and its derivatives
-   
-   Archlinux has an [AUR Package](https://aur.archlinux.org/packages/rbenv/) for
-   rbenv and you can install it from the AUR using the instructions from this
-   [wiki page](https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_and_upgrading_packages).
-
-2. Learn how to load rbenv in your shell.
-
-    ```sh
-    # run this and follow the printed instructions:
-    rbenv init
-    ```
-
-3. Close your Terminal window and open a new one so your changes take effect.
-
-That's it! You are now ready to [install some Ruby versions](#installing-ruby-versions).
-
 ### Basic Git Checkout
 
-> **Note**  
-> For a more automated install, you can use [rbenv-installer](https://github.com/rbenv/rbenv-installer#rbenv-installer). If you do not want to execute scripts downloaded from a web URL or simply prefer a manual approach, follow the steps below.
+This will get you going with the latest version of tfenv without needing a system-wide install.
 
-This will get you going with the latest version of rbenv without needing a system-wide install.
-
-1. Clone rbenv into `~/.rbenv`.
+1. Clone tfenv into `~/.tfenv`.
 
     ```sh
-    git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+    git clone https://github.com/oliveiraev/tfenv.git ~/.tfenv
     ```
 
-2. Configure your shell to load rbenv:
+2. Configure your shell to load tfenv:
 
    * For **bash**:
      
      _Ubuntu Desktop_ users should configure `~/.bashrc`:
      ```bash
-     echo 'eval "$(~/.rbenv/bin/rbenv init - bash)"' >> ~/.bashrc
+     echo 'eval "$(~/.tfenv/bin/tfenv init - bash)"' >> ~/.bashrc
      ```
 
      On _other platforms_, bash is usually configured via `~/.bash_profile`:
      ```bash
-     echo 'eval "$(~/.rbenv/bin/rbenv init - bash)"' >> ~/.bash_profile
+     echo 'eval "$(~/.tfenv/bin/tfenv init - bash)"' >> ~/.bash_profile
      ```
      
    * For **Zsh**:
      ```zsh
-     echo 'eval "$(~/.rbenv/bin/rbenv init - zsh)"' >> ~/.zshrc
+     echo 'eval "$(~/.tfenv/bin/tfenv init - zsh)"' >> ~/.zshrc
      ```
    
    * For **Fish shell**:
      ```fish
-     echo 'status --is-interactive; and ~/.rbenv/bin/rbenv init - fish | source' >> ~/.config/fish/config.fish
+     echo 'status --is-interactive; and ~/.tfenv/bin/tfenv init - fish | source' >> ~/.config/fish/config.fish
      ```
 
-   If you are curious, see here to [understand what `init` does](#how-rbenv-hooks-into-your-shell).
+   If you are curious, see here to [understand what `init` does](#how-tfenv-hooks-into-your-shell).
 
 3. Restart your shell so that these changes take effect. (Opening a new terminal tab will usually do it.)
 
-### Installing Ruby versions
+### Installing Terraform versions
 
-The `rbenv install` command does not ship with rbenv out-of-the-box, but is provided by the [ruby-build][] plugin.
+You can download Terraform manually as a subdirectory of `~/.tfenv/versions`. An entry in that directory can also be a symlink to a Terraform version installed elsewhere on the filesystem.
 
-Before attempting to install Ruby, **check that [your build environment](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment) has the necessary tools and libraries**. Then:
+#### Uninstalling Terraform versions
 
-```sh
-# list latest stable versions:
-rbenv install -l
+As time goes on, Terraform versions you install will accumulate in your `~/.tfenv/versions` directory.
 
-# list all local versions:
-rbenv install -L
-
-# install a Ruby version:
-rbenv install 3.1.2
-```
-
-For troubleshooting `BUILD FAILED` scenarios, check the [ruby-build Discussions section](https://github.com/rbenv/ruby-build/discussions/categories/build-failures).
-
-> **Note**  
-> If the `rbenv install` command wasn't found, you can install ruby-build as a plugin:
-> ```sh
-> git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
-> ```
-
-Set a Ruby version to finish installation and start using Ruby:
-```sh
-rbenv global 3.1.2   # set the default Ruby version for this machine
-# or:
-rbenv local 3.1.2    # set the Ruby version for this directory
-```
-
-Alternatively to the `rbenv install` command, you can download and compile Ruby manually as a subdirectory of `~/.rbenv/versions`. An entry in that directory can also be a symlink to a Ruby version installed elsewhere on the filesystem.
-
-#### Installing Ruby gems
-
-Select a Ruby version for your project using `rbenv local 3.1.2`, for example. Then, proceed to install gems as you normally would:
-
-```sh
-gem install bundler
-```
-
-> **Warning**  
-> You _should not use sudo_ to install gems. Typically, the Ruby versions will be installed under your home directory and thus writeable by your user. If you get the “you don't have write permissions” error when installing gems, it's likely that your "system" Ruby version is still a global default. Change that with `rbenv global <version>` and try again.
-
-Check the location where gems are being installed with `gem env`:
-
-```sh
-gem env home
-# => ~/.rbenv/versions/<version>/lib/ruby/gems/...
-```
-
-#### Uninstalling Ruby versions
-
-As time goes on, Ruby versions you install will accumulate in your
-`~/.rbenv/versions` directory.
-
-To remove old Ruby versions, simply `rm -rf` the directory of the
-version you want to remove. You can find the directory of a particular
-Ruby version with the `rbenv prefix` command, e.g. `rbenv prefix
-2.7.0`.
-
-The [ruby-build][] plugin provides an `rbenv uninstall` command to
-automate the removal process.
+To remove old Terraform versions, simply `rm -rf` the directory of the version you want to remove. You can find the directory of a particular Terraform version with the `tfenv prefix` command, e.g. `tfenv prefix 0.15.5`.
 
 ## Command Reference
 
-The main rbenv commands you need to know are:
+The main tfenv commands you need to know are:
 
-### rbenv versions
+### tfenv versions
 
-Lists all Ruby versions known to rbenv, and shows an asterisk next to
-the currently active version.
+Lists all Terraform versions known to tfenv, and shows an asterisk next to the currently active version.
 
-    $ rbenv versions
-      1.8.7-p352
-      1.9.2-p290
-    * 1.9.3-p327 (set by /Users/sam/.rbenv/version)
-      jruby-1.7.1
-      rbx-1.2.4
-      ree-1.8.7-2011.03
+    $ tfenv versions
+      1.4.2
+      0.15.5
+    * 0.13.7 (set by /Users/oliveiraev/.tfenv/version)
 
-### rbenv version
+### tfenv version
 
-Displays the currently active Ruby version, along with information on
-how it was set.
+Displays the currently active Terraform version, along with information on how it was set.
 
-    $ rbenv version
-    1.9.3-p327 (set by /Users/sam/.rbenv/version)
+    $ tfenv version
+    1.4.2 (set by /Users/oliveiraev/.tfenv/version)
 
-### rbenv local
+### tfenv local
 
-Sets a local application-specific Ruby version by writing the version
-name to a `.ruby-version` file in the current directory. This version
-overrides the global version, and can be overridden itself by setting
-the `RBENV_VERSION` environment variable or with the `rbenv shell`
-command.
+Sets a local application-specific Terraform version by writing the version name to a `.terraform-version` file in the current directory. This version overrides the global version, and can be overridden itself by setting the `TFENV_VERSION` environment variable or with the `tfenv shell` command.
 
-    rbenv local 3.1.2
+    tfenv local 0.14.11
 
-When run without a version number, `rbenv local` reports the currently
-configured local version. You can also unset the local version:
+When run without a version number, `tfenv local` reports the currently configured local version. You can also unset the local version:
 
-    rbenv local --unset
+    tfenv local --unset
 
-### rbenv global
+### tfenv global
 
-Sets the global version of Ruby to be used in all shells by writing
-the version name to the `~/.rbenv/version` file. This version can be
-overridden by an application-specific `.ruby-version` file, or by
-setting the `RBENV_VERSION` environment variable.
+Sets the global version of Terraform to be used in all shells by writing the version name to the `~/.tfenv/version` file. This version can be overridden by an application-specific `.terraform-version` file, or by setting the `TFENV_VERSION` environment variable.
 
-    rbenv global 3.1.2
+    tfenv global 1.3.9
 
-The special version name `system` tells rbenv to use the system Ruby
-(detected by searching your `$PATH`).
+The special version name `system` tells tfenv to use the system Terraform (detected by searching your `$PATH`).
 
-When run without a version number, `rbenv global` reports the
-currently configured global version.
+When run without a version number, `tfenv global` reports the currently configured global version.
 
-### rbenv shell
+### tfenv shell
 
-Sets a shell-specific Ruby version by setting the `RBENV_VERSION`
-environment variable in your shell. This version overrides
-application-specific versions and the global version.
+Sets a shell-specific Terraform version by setting the `TFENV_VERSION` environment variable in your shell. This version overrides application-specific versions and the global version.
 
-    rbenv shell jruby-1.7.1
+    tfenv shell 1.2.9
 
-When run without a version number, `rbenv shell` reports the current
-value of `RBENV_VERSION`. You can also unset the shell version:
+When run without a version number, `tfenv shell` reports the current value of `TFENV_VERSION`. You can also unset the shell version:
 
-    rbenv shell --unset
+    tfenv shell --unset
 
-Note that you'll need rbenv's shell integration enabled (step 3 of
-the installation instructions) in order to use this command. If you
-prefer not to use shell integration, you may simply set the
-`RBENV_VERSION` variable yourself:
+Note that you'll need tfenv's shell integration enabled (step 3 of the installation instructions) in order to use this command. If you prefer not to use shell integration, you may simply set the `TFENV_VERSION` variable yourself:
 
-    export RBENV_VERSION=jruby-1.7.1
+    export TFENV_VERSION=0.12.31
 
-### rbenv rehash
+### tfenv rehash
 
-Installs shims for all Ruby executables known to rbenv (`~/.rbenv/versions/*/bin/*`). Typically you do not need to run this command, as it will run automatically after installing gems.
+Installs shims for all Terraform executables known to tfenv (`~/.tfenv/versions/*/bin/*`). Typically you do not need to run this command, as it will run automatically after installing gems.
 
-    rbenv rehash
-
-### rbenv which
-
-Displays the full path to the executable that rbenv will invoke when
-you run the given command.
-
-    $ rbenv which irb
-    /Users/sam/.rbenv/versions/1.9.3-p327/bin/irb
-
-### rbenv whence
-
-Lists all Ruby versions that contain the specified executable name.
-
-    $ rbenv whence rackup
-    1.9.3-p327
-    jruby-1.7.1
-    ree-1.8.7-2011.03
+    tfenv rehash
 
 ## Environment variables
 
-You can affect how rbenv operates with the following settings:
+You can affect how tfenv operates with the following settings:
 
-name | default | description
------|---------|------------
-`RBENV_VERSION` | | Specifies the Ruby version to be used.<br>Also see [`rbenv shell`](#rbenv-shell)
-`RBENV_ROOT` | `~/.rbenv` | Defines the directory under which Ruby versions and shims reside.<br>Also see `rbenv root`
-`RBENV_DEBUG` | | Outputs debug information.<br>Also as: `rbenv --debug <subcommand>`
-`RBENV_HOOK_PATH` | [_see wiki_][hooks] | Colon-separated list of paths searched for rbenv hooks.
-`RBENV_DIR` | `$PWD` | Directory to start searching for `.ruby-version` files.
+| name              | default    | description                                                                                     |
+|-------------------|------------|-------------------------------------------------------------------------------------------------|
+| `TFENV_VERSION`   |            | Specifies the Terraform version to be used.<br>Also see [`tfenv shell`](#tfenv-shell)           |
+| `TFENV_ROOT`      | `~/.tfenv` | Defines the directory under which Terraform versions and shims reside.<br>Also see `tfenv root` |
+| `TFENV_DEBUG`     |            | Outputs debug information.<br>Also as: `tfenv --debug <subcommand>`                             |
+| `TFENV_HOOK_PATH` | hooks      | Colon-separated list of paths searched for tfenv hooks.                                         |
+| `TFENV_DIR`       | `$PWD`     | Directory to start searching for `.terraform-version` files.                                    |
 
-### How rbenv hooks into your shell
+### How tfenv hooks into your shell
 
-`rbenv init` is a helper command to bootstrap rbenv into a shell. This helper is part of the recommended installation instructions, but optional, as an advanced user can set up the following tasks manually. Here is what the command does when its output is `eval`'d:
+`tfenv init` is a helper command to bootstrap tfenv into a shell. This helper is part of the recommended installation instructions, but optional, as an advanced user can set up the following tasks manually. Here is what the command does when its output is `eval`'d:
 
-0. Adds `rbenv` executable to PATH if necessary.
+1. Adds `tfenv` executable to PATH if necessary.
 
-1. Prepends `~/.rbenv/shims` directory to PATH. This is basically the only requirement for rbenv to function properly.
+2. Prepends `~/.tfenv/shims` directory to PATH. This is basically the only requirement for tfenv to function properly.
 
-2. Installs shell completion for rbenv commands.
+3. Installs shell completion for tfenv commands.
 
-3. Regenerates rbenv shims. If this step slows down your shell startup, you can invoke `rbenv init -` with the `--no-rehash` flag.
+4. Regenerates tfenv shims. If this step slows down your shell startup, you can invoke `tfenv init -` with the `--no-rehash` flag.
 
-4. Installs the "sh" dispatcher. This bit is also optional, but allows rbenv and plugins to change variables in your current shell, making commands like `rbenv shell` possible.
+5. Installs the "sh" dispatcher. This bit is also optional, but allows tfenv and plugins to change variables in your current shell, making commands like `tfenv shell` possible.
 
-You can run `rbenv init -` for yourself to inspect the generated script.
+You can run `tfenv init -` for yourself to inspect the generated script.
 
-### Uninstalling rbenv
+### Uninstalling tfenv
 
-The simplicity of rbenv makes it easy to temporarily disable it, or
-uninstall from the system.
+The simplicity of tfenv makes it easy to temporarily disable it, or uninstall from the system.
 
-1. To **disable** rbenv managing your Ruby versions, simply comment or remove the `rbenv init` line from your shell startup configuration. This will remove rbenv shims directory from PATH, and future invocations like `ruby` will execute the system Ruby version, bypassing rbenv completely.
+1. To **disable** tfenv managing your Terraform versions, simply comment or remove the `tfenv init` line from your shell startup configuration. This will remove tfenv shims directory from PATH, and future invocations like `terraform` will execute the system Terraform version, bypassing tfenv completely.
 
-   While disabled, `rbenv` will still be accessible on the command line, but your Ruby apps won't be affected by version switching.
+   While disabled, `tfenv` will still be accessible on the command line, but your Terraform apps won't be affected by version switching.
 
-2. To completely **uninstall** rbenv, perform step (1) and then remove the rbenv root directory. This will **delete all Ruby versions** that were installed under `` `rbenv root`/versions/ ``:
+2. To completely **uninstall** tfenv, perform step (1) and then remove the tfenv root directory. This will **delete all Terraform versions** that were installed under `` `tfenv root`/versions/ ``:
 
-       rm -rf "$(rbenv root)"
-
-   If you've installed rbenv using a package manager, as a final step
-   perform the rbenv package removal:
-   - Homebrew: `brew uninstall rbenv`
-   - Debian, Ubuntu, and their derivatives: `sudo apt purge rbenv`
-   - Archlinux and its derivatives: `sudo pacman -R rbenv`
+       rm -rf "$(tfenv root)"
 
 ## Development
 
@@ -320,11 +174,4 @@ Tests are executed using [Bats](https://github.com/sstephenson/bats):
     $ bats test
     $ bats test/<file>.bats
 
-Please feel free to submit pull requests and file bugs on the [issue
-tracker](https://github.com/rbenv/rbenv/issues).
-
-
-  [ruby-build]: https://github.com/rbenv/ruby-build#readme
-  [hooks]: https://github.com/rbenv/rbenv/wiki/Authoring-plugins#rbenv-hooks
-  [alternatives]: https://github.com/rbenv/rbenv/wiki/Comparison-of-version-managers
-  [plugins]: https://github.com/rbenv/rbenv/wiki/Plugins
+Please feel free to submit pull requests and file bugs on the [issue tracker](https://github.com/oliveiraev/tfenv/issues).

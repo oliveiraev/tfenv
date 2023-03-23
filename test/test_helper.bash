@@ -1,20 +1,20 @@
-unset RBENV_VERSION
-unset RBENV_DIR
+unset TFENV_VERSION
+unset TFENV_DIR
 
 # guard against executing this block twice due to bats internals
-if [ -z "$RBENV_TEST_DIR" ]; then
-  RBENV_TEST_DIR="${BATS_TMPDIR}/rbenv"
-  export RBENV_TEST_DIR="$(mktemp -d "${RBENV_TEST_DIR}.XXX" 2>/dev/null || echo "$RBENV_TEST_DIR")"
+if [ -z "$TFENV_TEST_DIR" ]; then
+  TFENV_TEST_DIR="${BATS_TMPDIR}/tfenv"
+  export TFENV_TEST_DIR="$(mktemp -d "${TFENV_TEST_DIR}.XXX" 2>/dev/null || echo "$TFENV_TEST_DIR")"
 
-  export RBENV_ROOT="${RBENV_TEST_DIR}/root"
-  export HOME="${RBENV_TEST_DIR}/home"
-  export RBENV_HOOK_PATH="${RBENV_ROOT}/rbenv.d"
+  export TFENV_ROOT="${TFENV_TEST_DIR}/root"
+  export HOME="${TFENV_TEST_DIR}/home"
+  export TFENV_HOOK_PATH="${TFENV_ROOT}/tfenv.d"
 
   PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
-  PATH="${RBENV_TEST_DIR}/bin:$PATH"
+  PATH="${TFENV_TEST_DIR}/bin:$PATH"
   PATH="${BATS_TEST_DIRNAME}/../libexec:$PATH"
   PATH="${BATS_TEST_DIRNAME}/libexec:$PATH"
-  PATH="${RBENV_ROOT}/shims:$PATH"
+  PATH="${TFENV_ROOT}/shims:$PATH"
   export PATH
 
   for xdg_var in `env 2>/dev/null | grep ^XDG_ | cut -d= -f1`; do unset "$xdg_var"; done
@@ -22,14 +22,14 @@ if [ -z "$RBENV_TEST_DIR" ]; then
 fi
 
 teardown() {
-  rm -rf "$RBENV_TEST_DIR"
+  rm -rf "$TFENV_TEST_DIR"
 }
 
 flunk() {
   { if [ "$#" -eq 0 ]; then cat -
     else echo "$@"
     fi
-  } | sed "s:${RBENV_TEST_DIR}:TEST_DIR:g" >&2
+  } | sed "s:${TFENV_TEST_DIR}:TEST_DIR:g" >&2
   return 1
 }
 
@@ -100,15 +100,15 @@ assert() {
 }
 
 # Output a modified PATH that ensures that the given executable is not present,
-# but in which system utils necessary for rbenv operation are still available.
+# but in which system utils necessary for tfenv operation are still available.
 path_without() {
   local exe="$1"
   local path=":${PATH}:"
   local found alt util
   for found in $(type -aP "$exe"); do
     found="${found%/*}"
-    if [ "$found" != "${RBENV_ROOT}/shims" ]; then
-      alt="${RBENV_TEST_DIR}/$(echo "${found#/}" | tr '/' '-')"
+    if [ "$found" != "${TFENV_ROOT}/shims" ]; then
+      alt="${TFENV_TEST_DIR}/$(echo "${found#/}" | tr '/' '-')"
       mkdir -p "$alt"
       for util in bash head cut readlink greadlink sed sort awk; do
         if [ -x "${found}/$util" ]; then
@@ -123,9 +123,9 @@ path_without() {
 }
 
 create_hook() {
-  mkdir -p "${RBENV_HOOK_PATH}/$1"
-  touch "${RBENV_HOOK_PATH}/$1/$2"
+  mkdir -p "${TFENV_HOOK_PATH}/$1"
+  touch "${TFENV_HOOK_PATH}/$1/$2"
   if [ ! -t 0 ]; then
-    cat > "${RBENV_HOOK_PATH}/$1/$2"
+    cat > "${TFENV_HOOK_PATH}/$1/$2"
   fi
 }

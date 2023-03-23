@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# Summary: Run an executable with the selected Terraform version
+#
+# Usage: tfenv exec <command> [arg1 arg2...]
+#
+# Runs an executable by first preparing PATH so that the selected Terraform
+# version's `bin' directory is at the front.
+#
+# For example, if the currently selected Terraform version is 1.9.3-p327:
+#   tfenv exec bundle install
+#
+# is equivalent to:
+#   PATH="$TFENV_ROOT/versions/1.9.3-p327/bin:$PATH" bundle install
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  exec tfenv-shims --short
+fi
+
+TFENV_VERSION="$(tfenv-version-name)"
+TFENV_COMMAND="$1"
+
+if [ -z "$TFENV_COMMAND" ]; then
+  tfenv-help --usage exec >&2
+  exit 1
+fi
+
+export TFENV_VERSION
+TFENV_COMMAND_PATH="$(tfenv-which "$TFENV_COMMAND")"
+TFENV_BIN_PATH="${TFENV_COMMAND_PATH%/*}"
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tfenv-hooks exec)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+shift 1
+if [ "$TFENV_VERSION" != "system" ]; then
+  export PATH="${TFENV_BIN_PATH}:${PATH}"
+fi
+exec -a "$TFENV_COMMAND" "$TFENV_COMMAND_PATH" "$@"

@@ -1,0 +1,127 @@
+'\" t
+.\"     Title: tfenv
+.\"    Author: Mislav Marohnić
+.\" Generator: Asciidoctor 2.0.17
+.\"      Date: 2022-10-09
+.\"    Manual: Tfenv Manual
+.\"    Source: tfenv 0.0.1
+.\"  Language: English
+.\"
+.TH "TFENV" "1" "2022-10-09" "tfenv 0.0.1" "Tfenv Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+tfenv \- manage your application\*(Aqs Terraform environment
+.SH "SYNOPSIS"
+.sp
+\fBtfenv\fP \fI<command>\fP [\fI<args>\fP...]
+.SH "DESCRIPTION"
+.sp
+tfenv respects the \fI.terraform\-version\fP file in a project directory by making sure that any \fBterraform\fP, or other Terraform command invocation, automatically invokes the Terraform version configured for that project.
+.sp
+It does so by generating shims for all Terraform executables. As long as tfenv shims directory is prepended to PATH, tfenv automatically ensures transparent switching between Terraform versions.
+.sp
+tfenv looks for available Terraform versions in the \fI$TFENV_ROOT/versions/\fP directory.
+.SH "COMMANDS"
+.sp
+\fBtfenv global\fP [\fI<version>\fP]
+.RS 4
+View or change the global Terraform version
+.RE
+.sp
+\fBtfenv local\fP [\fI<version>\fP]
+.RS 4
+View or change the local Terraform version
+.RE
+.sp
+\fBtfenv shell\fP [\fI<version>\fP]
+.RS 4
+View or change the Terraform version for the current shell session
+.RE
+.sp
+\fBtfenv version\fP
+.RS 4
+View the currently active Terraform version and where it is set from
+.RE
+.sp
+\fBtfenv versions\fP
+.RS 4
+List all locally installed Terraform versions known to tfenv
+.RE
+.sp
+\fBtfenv rehash\fP
+.RS 4
+Regenerate shims for all known Terraform executables
+.RE
+.sp
+\fBtfenv init\fP
+.RS 4
+Help bootstrap tfenv into the current shell environment
+.RE
+.sp
+\fBtfenv help\fP [\fI<command>\fP]
+.RS 4
+View help text for any tfenv command
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.sp
+\fBTFENV_VERSION\fP (default: read from \fI.terraform\-version\fP file)
+.RS 4
+The Terraform version name to be used
+.RE
+.sp
+\fBTFENV_ROOT\fP (default: \fI~/.tfenv\fP)
+.RS 4
+The location where tfenv discovers Terraform versions, plugins, and other configuration
+.RE
+.sp
+\fBTFENV_DEBUG\fP
+.RS 4
+Activates printing debug information about tfenv internals to standard error
+.RE
+.sp
+\fBTFENV_HOOK_PATH\fP
+.RS 4
+Colon\-separated list of paths searched for tfenv plugin scripts
+.RE
+.sp
+\fBTFENV_DIR\fP (default: \fI$PWD\fP)
+.RS 4
+Directory to traverse bottom\-up to locate the \fI.terraform\-version\fP file
+.RE
+.SH "PLUGINS"
+.sp
+As its core functionality, tfenv only switches between Terraform versions and does nothing else, but offers a plugin mechanism to hook into and override almost any aspect of its default behavior.
+.sp
+.SH "NOTES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+.URL "https://github.com/oliveiraev/tfenv/discussions" "" ""
+.RE
+.SH "AUTHOR"
+.sp
+Mislav Marohnić

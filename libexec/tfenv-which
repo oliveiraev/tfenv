@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+# Summary: Display the full path to an executable
+#
+# Usage: tfenv which <command>
+#
+# Displays the full path to the executable that tfenv will invoke when
+# you run the given command.
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  exec tfenv-shims --short
+fi
+
+remove_from_path() {
+  local path_to_remove="$1"
+  local path_before
+  local result=":${PATH//\~/$HOME}:"
+  while [ "$path_before" != "$result" ]; do
+    path_before="$result"
+    result="${result//:$path_to_remove:/:}"
+  done
+  result="${result%:}"
+  echo "${result#:}"
+}
+
+TFENV_COMMAND="$1"
+
+if [ -z "$TFENV_COMMAND" ]; then
+  tfenv-help --usage which >&2
+  exit 1
+fi
+
+TFENV_VERSION="${TFENV_VERSION:-$(tfenv-version-name)}"
+
+if [ "$TFENV_VERSION" = "system" ]; then
+  PATH="$(remove_from_path "${TFENV_ROOT}/shims")" \
+    TFENV_COMMAND_PATH="$(command -v "$TFENV_COMMAND" || true)"
+else
+  TFENV_COMMAND_PATH="${TFENV_ROOT}/versions/${TFENV_VERSION}/bin/${TFENV_COMMAND}"
+fi
+
+if [[ ! -x "$TFENV_COMMAND_PATH" && -n "$GEM_HOME" && -x "${GEM_HOME}/bin/${TFENV_COMMAND}" ]]; then
+  TFENV_COMMAND_PATH="${GEM_HOME}/bin/${TFENV_COMMAND}"
+fi
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tfenv-hooks which)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+if [ -x "$TFENV_COMMAND_PATH" ]; then
+  echo "$TFENV_COMMAND_PATH"
+elif [ "$TFENV_VERSION" != "system" ] && [ ! -d "${TFENV_ROOT}/versions/${TFENV_VERSION}" ]; then
+  echo "tfenv: version \`$TFENV_VERSION' is not installed (set by $(tfenv-version-origin))" >&2
+  exit 1
+else
+  echo "tfenv: $TFENV_COMMAND: command not found" >&2
+
+  versions="$(tfenv-whence "$TFENV_COMMAND" || true)"
+  if [ -n "$versions" ]; then
+    { echo
+      echo "The \`$1' command exists in these Terraform versions:"
+      echo "${versions}" | LC_ALL='C' sort -V | sed -r -e 's/^/  /g'
+      echo
+    } >&2
+  fi
+
+  exit 127
+fi

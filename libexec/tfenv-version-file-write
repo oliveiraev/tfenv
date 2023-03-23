@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Usage: tfenv version-file-write <file> <version>
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+TFENV_VERSION_FILE="$1"
+TFENV_VERSION="$2"
+
+if [ -z "$TFENV_VERSION" ] || [ -z "$TFENV_VERSION_FILE" ]; then
+  tfenv-help --usage version-file-write >&2
+  exit 1
+fi
+
+# Make sure the specified version is installed.
+tfenv-prefix "$TFENV_VERSION" >/dev/null
+
+# Write the version out to disk.
+echo "$TFENV_VERSION" > "$TFENV_VERSION_FILE"

@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+set -e
+
+if [ "$1" = "--debug" ]; then
+  export TFENV_DEBUG=1
+  shift
+fi
+
+if [ -n "$TFENV_DEBUG" ]; then
+  # https://wiki-dev.bash-hackers.org/scripting/debuggingtips#making_xtrace_more_useful
+  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+  set -x
+fi
+
+abort() {
+  { if [ "$#" -eq 0 ]; then cat -
+    else echo "tfenv: $*"
+    fi
+  } >&2
+  exit 1
+}
+
+if [ -z "${TFENV_ROOT}" ]; then
+  TFENV_ROOT="${HOME}/.tfenv"
+else
+  TFENV_ROOT="${TFENV_ROOT%/}"
+fi
+export TFENV_ROOT
+
+if [ -z "${TFENV_DIR}" ]; then
+  TFENV_DIR="$PWD"
+else
+  [[ $TFENV_DIR == /* ]] || TFENV_DIR="$PWD/$TFENV_DIR"
+  cd "$TFENV_DIR" 2>/dev/null || abort "cannot change working directory to \`$TFENV_DIR'"
+  TFENV_DIR="$PWD"
+  cd "$OLDPWD"
+fi
+export TFENV_DIR
+
+[ -n "$TFENV_ORIG_PATH" ] || export TFENV_ORIG_PATH="$PATH"
+
+canonicalize() {
+  local readlink resolved_path
+  if readlink="$(type -P greadlink)" || readlink="$(type -P readlink)"; then
+    # happy path: GNU & BSD readlink, macOS 12.3+
+    if resolved_path="$("$readlink" -f "$1" 2>/dev/null)"; then
+      printf "%s\n" "$resolved_path"
+      return 0
+    fi
+    # likely macOS < 12.3 with old readlink
+    local path="$1"
+    while [ -L "$path" ]; do
+      resolved_path="$("$readlink" "$path" 2>/dev/null)"
+      [[ $resolved_path == /* ]] || resolved_path="$(cd "${path%/*}/${resolved_path%/*}" && pwd)/${resolved_path##*/}"
+      path="$resolved_path"
+    done
+    printf "%s\n" "$path"
+    return 0
+  fi
+  # fail if the argument is a symlink and was not canonicalized
+  [ ! -L "$1" ] || return 1
+}
+
+shopt -s nullglob
+
+# all this trouble just to find out where tfenv's executables live
+tfenv_bin="${BASH_SOURCE:-$0}"
+if libexec_dir="$(canonicalize "$tfenv_bin")"; then
+  libexec_dir="${libexec_dir%/*}"
+else
+  libexec_dir="${tfenv_bin%/*}"
+  [ "$libexec_dir" != "." ] || libexec_dir="$PWD"
+fi
+
+for plugin_bin in "${TFENV_ROOT}/plugins/"*/bin; do
+  PATH="${plugin_bin}:${PATH}"
+done
+export PATH="${libexec_dir}:${PATH}"
+
+TFENV_HOOK_PATH="${TFENV_HOOK_PATH}:${TFENV_ROOT}/tfenv.d"
+if [ ! "${libexec_dir%/*}"/tfenv.d -ef "$TFENV_ROOT"/tfenv.d ]; then
+  # Add tfenv's own `tfenv.d` unless tfenv was cloned to TFENV_ROOT
+  TFENV_HOOK_PATH="${TFENV_HOOK_PATH}:${libexec_dir%/*}/tfenv.d"
+fi
+TFENV_HOOK_PATH="${TFENV_HOOK_PATH}:/usr/local/etc/tfenv.d:/etc/tfenv.d:/usr/lib/tfenv/hooks"
+for plugin_hook in "${TFENV_ROOT}/plugins/"*/etc/tfenv.d; do
+  TFENV_HOOK_PATH="${TFENV_HOOK_PATH}:${plugin_hook}"
+done
+TFENV_HOOK_PATH="${TFENV_HOOK_PATH#:}"
+export TFENV_HOOK_PATH
+
+shopt -u nullglob
+
+
+command="$1"
+case "$command" in
+"" )
+  { tfenv---version
+    tfenv-help
+  } | abort
+  ;;
+-v | --version )
+  exec tfenv---version
+  ;;
+-h | --help )
+  exec tfenv-help
+  ;;
+* )
+  command_path="$(type -P "tfenv-$command" || true)"
+  if [ -z "$command_path" ]; then
+    if [ "$command" == "shell" ]; then
+      abort "shell integration not enabled. Run \`tfenv init' for instructions."
+    else
+      abort "no such command \`$command'"
+    fi
+  fi
+
+  shift 1
+  if [ "$1" = --help ]; then
+    if [[ "$command" == "sh-"* ]]; then
+      echo "tfenv help \"$command\""
+    else
+      exec tfenv-help "$command"
+    fi
+  else
+    exec "$command_path" "$@"
+  fi
+  ;;
+esac

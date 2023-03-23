@@ -1,0 +1,69 @@
+= tfenv(1)
+Mislav Marohnić
+:doctype: manpage
+:man manual: Tfenv Manual
+:man source: tfenv {version}
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tfenv - manage your application's Terraform environment
+
+== Synopsis
+
+*tfenv* _<command>_ [_<args>_...]
+
+== Description
+
+tfenv respects the _.terraform-version_ file in a project directory by making sure that any *terraform*, or other Terraform command invocation, automatically invokes the Terraform version configured for that project.
+
+It does so by generating shims for all Terraform executables. As long as tfenv shims directory is prepended to PATH, tfenv automatically ensures transparent switching between Terraform versions.
+
+tfenv looks for available Terraform versions in the _$TFENV_ROOT/versions_ directory.
+
+== Commands
+
+*tfenv global* [_<version>_]::
+  View or change the global Terraform version
+
+*tfenv local* [_<version>_]::
+  View or change the local Terraform version
+
+*tfenv shell* [_<version>_]::
+  View or change the Terraform version for the current shell session
+
+*tfenv version*::
+  View the currently active Terraform version and where it is set from
+
+*tfenv versions*::
+  List all locally installed Terraform versions known to tfenv
+
+*tfenv rehash*::
+  Regenerate shims for all known Terraform executables
+
+*tfenv init*::
+  Help bootstrap tfenv into the current shell environment
+
+*tfenv help* [_<command>_]::
+  View help text for any tfenv command
+
+== Environment Variables
+
+*TFENV_VERSION* (default: read from _.terraform-version_ file)::
+  The Terraform version name to be used
+
+*TFENV_ROOT* (default: _~/.tfenv_)::
+  The location where tfenv discovers Terraform versions, plugins, and other configuration
+
+*TFENV_DEBUG*::
+  Activates printing debug information about tfenv internals to standard error
+
+*TFENV_HOOK_PATH*::
+  Colon-separated list of paths searched for tfenv plugin scripts
+
+*TFENV_DIR* (default: _$PWD_)::
+  Directory to traverse bottom-up to locate the _.terraform-version_ file
+
+== Plugins
+
+As its core functionality, tfenv only switches between Terraform versions and does nothing else, but offers a plugin mechanism to hook into and override almost any aspect of its default behavior.

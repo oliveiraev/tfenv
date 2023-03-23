@@ -3,89 +3,89 @@
 load test_helper
 
 @test "shell integration disabled" {
-  run rbenv shell
-  assert_failure "rbenv: shell integration not enabled. Run \`rbenv init' for instructions."
+  run tfenv shell
+  assert_failure "tfenv: shell integration not enabled. Run \`tfenv init' for instructions."
 }
 
 @test "shell integration enabled" {
-  eval "$(rbenv init -)"
-  run rbenv shell
-  assert_success "rbenv: no shell-specific version configured"
+  eval "$(tfenv init -)"
+  run tfenv shell
+  assert_success "tfenv: no shell-specific version configured"
 }
 
 @test "no shell version" {
-  mkdir -p "${RBENV_TEST_DIR}/myproject"
-  cd "${RBENV_TEST_DIR}/myproject"
-  echo "1.2.3" > .ruby-version
-  RBENV_VERSION="" run rbenv-sh-shell
-  assert_failure "rbenv: no shell-specific version configured"
+  mkdir -p "${TFENV_TEST_DIR}/myproject"
+  cd "${TFENV_TEST_DIR}/myproject"
+  echo "1.2.3" > .terraform-version
+  TFENV_VERSION="" run tfenv-sh-shell
+  assert_failure "tfenv: no shell-specific version configured"
 }
 
 @test "shell version" {
-  RBENV_SHELL=bash RBENV_VERSION="1.2.3" run rbenv-sh-shell
-  assert_success 'echo "$RBENV_VERSION"'
+  TFENV_SHELL=bash TFENV_VERSION="1.2.3" run tfenv-sh-shell
+  assert_success 'echo "$TFENV_VERSION"'
 }
 
 @test "shell version (fish)" {
-  RBENV_SHELL=fish RBENV_VERSION="1.2.3" run rbenv-sh-shell
-  assert_success 'echo "$RBENV_VERSION"'
+  TFENV_SHELL=fish TFENV_VERSION="1.2.3" run tfenv-sh-shell
+  assert_success 'echo "$TFENV_VERSION"'
 }
 
 @test "shell revert" {
-  RBENV_SHELL=bash run rbenv-sh-shell -
+  TFENV_SHELL=bash run tfenv-sh-shell -
   assert_success
-  assert_line 0 'if [ -n "${RBENV_VERSION_OLD+x}" ]; then'
+  assert_line 0 'if [ -n "${TFENV_VERSION_OLD+x}" ]; then'
 }
 
 @test "shell revert (fish)" {
-  RBENV_SHELL=fish run rbenv-sh-shell -
+  TFENV_SHELL=fish run tfenv-sh-shell -
   assert_success
-  assert_line 0 'if set -q RBENV_VERSION_OLD'
+  assert_line 0 'if set -q TFENV_VERSION_OLD'
 }
 
 @test "shell unset" {
-  RBENV_SHELL=bash run rbenv-sh-shell --unset
+  TFENV_SHELL=bash run tfenv-sh-shell --unset
   assert_success
   assert_output <<OUT
-RBENV_VERSION_OLD="\${RBENV_VERSION-}"
-unset RBENV_VERSION
+TFENV_VERSION_OLD="\${TFENV_VERSION-}"
+unset TFENV_VERSION
 OUT
 }
 
 @test "shell unset (fish)" {
-  RBENV_SHELL=fish run rbenv-sh-shell --unset
+  TFENV_SHELL=fish run tfenv-sh-shell --unset
   assert_success
   assert_output <<OUT
-set -gu RBENV_VERSION_OLD "\$RBENV_VERSION"
-set -e RBENV_VERSION
+set -gu TFENV_VERSION_OLD "\$TFENV_VERSION"
+set -e TFENV_VERSION
 OUT
 }
 
 @test "shell change invalid version" {
-  run rbenv-sh-shell 1.2.3
+  run tfenv-sh-shell 1.2.3
   assert_failure
   assert_output <<SH
-rbenv: version \`1.2.3' not installed
+tfenv: version \`1.2.3' not installed
 false
 SH
 }
 
 @test "shell change version" {
-  mkdir -p "${RBENV_ROOT}/versions/1.2.3"
-  RBENV_SHELL=bash run rbenv-sh-shell 1.2.3
+  mkdir -p "${TFENV_ROOT}/versions/1.2.3"
+  TFENV_SHELL=bash run tfenv-sh-shell 1.2.3
   assert_success
   assert_output <<OUT
-RBENV_VERSION_OLD="\${RBENV_VERSION-}"
-export RBENV_VERSION="1.2.3"
+TFENV_VERSION_OLD="\${TFENV_VERSION-}"
+export TFENV_VERSION="1.2.3"
 OUT
 }
 
 @test "shell change version (fish)" {
-  mkdir -p "${RBENV_ROOT}/versions/1.2.3"
-  RBENV_SHELL=fish run rbenv-sh-shell 1.2.3
+  mkdir -p "${TFENV_ROOT}/versions/1.2.3"
+  TFENV_SHELL=fish run tfenv-sh-shell 1.2.3
   assert_success
   assert_output <<OUT
-set -gu RBENV_VERSION_OLD "\$RBENV_VERSION"
-set -gx RBENV_VERSION "1.2.3"
+set -gu TFENV_VERSION_OLD "\$TFENV_VERSION"
+set -gx TFENV_VERSION "1.2.3"
 OUT
 }

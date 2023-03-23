@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Summary: Show the current Terraform version and its origin
+#
+# Shows the currently selected Terraform version and how it was
+# selected. To obtain only the version string, use `tfenv
+# version-name'.
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+version_name="$(tfenv-version-name)"
+version_origin="$(tfenv-version-origin)"
+
+if [ "$version_origin" = "${TFENV_ROOT}/version" ] && [ ! -e "$version_origin" ]; then
+  echo "$version_name"
+else
+  echo "$version_name (set by $version_origin)"
+fi

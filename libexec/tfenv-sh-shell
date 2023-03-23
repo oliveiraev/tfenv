@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the shell-specific Terraform version
+#
+# Usage: tfenv shell <version>
+#        tfenv shell -
+#        tfenv shell --unset
+#
+# Sets a shell-specific Terraform version by setting the `TFENV_VERSION'
+# environment variable in your shell. This version overrides local
+# application-specific versions and the global version.
+#
+# <version> should be a string matching a Terraform version known to tfenv.
+# The special version string `system' will use your default system Terraform.
+# Run `tfenv versions' for a list of available Terraform versions.
+#
+# When `-` is passed instead of the version string, the previously set
+# version will be restored. With `--unset`, the `TFENV_VERSION`
+# environment variable gets unset, restoring the environment to the
+# state before the first `tfenv shell` call.
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  echo --unset
+  echo system
+  exec tfenv-versions --bare
+fi
+
+version="$1"
+shell="$(basename "${TFENV_SHELL:-$SHELL}")"
+
+if [ -z "$version" ]; then
+  if [ -z "$TFENV_VERSION" ]; then
+    echo "tfenv: no shell-specific version configured" >&2
+    exit 1
+  else
+    echo 'echo "$TFENV_VERSION"'
+    exit
+  fi
+fi
+
+if [ "$version" = "--unset" ]; then
+  case "$shell" in
+  fish )
+    echo 'set -gu TFENV_VERSION_OLD "$TFENV_VERSION"'
+    echo "set -e TFENV_VERSION"
+    ;;
+  * )
+    echo 'TFENV_VERSION_OLD="${TFENV_VERSION-}"'
+    echo "unset TFENV_VERSION"
+    ;;
+  esac
+  exit
+fi
+
+if [ "$version" = "-" ]; then
+  case "$shell" in
+  fish )
+    cat <<EOS
+if set -q TFENV_VERSION_OLD
+  if [ -n "\$TFENV_VERSION_OLD" ]
+    set TFENV_VERSION_OLD_ "\$TFENV_VERSION"
+    set -gx TFENV_VERSION "\$TFENV_VERSION_OLD"
+    set -gu TFENV_VERSION_OLD "\$TFENV_VERSION_OLD_"
+    set -e TFENV_VERSION_OLD_
+  else
+    set -gu TFENV_VERSION_OLD "\$TFENV_VERSION"
+    set -e TFENV_VERSION
+  end
+else
+  echo "tfenv: TFENV_VERSION_OLD is not set" >&2
+  false
+end
+EOS
+    ;;
+  * )
+    cat <<EOS
+if [ -n "\${TFENV_VERSION_OLD+x}" ]; then
+  if [ -n "\$TFENV_VERSION_OLD" ]; then
+    TFENV_VERSION_OLD_="\$TFENV_VERSION"
+    export TFENV_VERSION="\$TFENV_VERSION_OLD"
+    TFENV_VERSION_OLD="\$TFENV_VERSION_OLD_"
+    unset TFENV_VERSION_OLD_
+  else
+    TFENV_VERSION_OLD="\$TFENV_VERSION"
+    unset TFENV_VERSION
+  fi
+else
+  echo "tfenv: TFENV_VERSION_OLD is not set" >&2
+  false
+fi
+EOS
+    ;;
+  esac
+  exit
+fi
+
+# Make sure the specified version is installed.
+if tfenv-prefix "$version" >/dev/null; then
+  if [ "$version" != "$TFENV_VERSION" ]; then
+    case "$shell" in
+    fish )
+      echo 'set -gu TFENV_VERSION_OLD "$TFENV_VERSION"'
+      echo "set -gx TFENV_VERSION \"$version\""
+      ;;
+    * )
+      echo 'TFENV_VERSION_OLD="${TFENV_VERSION-}"'
+      echo "export TFENV_VERSION=\"$version\""
+      ;;
+    esac
+  fi
+else
+  echo "false"
+  exit 1
+fi

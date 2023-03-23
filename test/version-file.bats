@@ -3,8 +3,8 @@
 load test_helper
 
 setup() {
-  mkdir -p "$RBENV_TEST_DIR"
-  cd "$RBENV_TEST_DIR"
+  mkdir -p "$TFENV_TEST_DIR"
+  cd "$TFENV_TEST_DIR"
 }
 
 create_file() {
@@ -13,63 +13,63 @@ create_file() {
 }
 
 @test "detects global 'version' file" {
-  create_file "${RBENV_ROOT}/version"
-  run rbenv-version-file
-  assert_success "${RBENV_ROOT}/version"
+  create_file "${TFENV_ROOT}/version"
+  run tfenv-version-file
+  assert_success "${TFENV_ROOT}/version"
 }
 
 @test "prints global file if no version files exist" {
-  assert [ ! -e "${RBENV_ROOT}/version" ]
-  assert [ ! -e ".ruby-version" ]
-  run rbenv-version-file
-  assert_success "${RBENV_ROOT}/version"
+  assert [ ! -e "${TFENV_ROOT}/version" ]
+  assert [ ! -e ".terraform-version" ]
+  run tfenv-version-file
+  assert_success "${TFENV_ROOT}/version"
 }
 
 @test "in current directory" {
-  create_file ".ruby-version"
-  run rbenv-version-file
-  assert_success "${RBENV_TEST_DIR}/.ruby-version"
+  create_file ".terraform-version"
+  run tfenv-version-file
+  assert_success "${TFENV_TEST_DIR}/.terraform-version"
 }
 
 @test "in parent directory" {
-  create_file ".ruby-version"
+  create_file ".terraform-version"
   mkdir -p project
   cd project
-  run rbenv-version-file
-  assert_success "${RBENV_TEST_DIR}/.ruby-version"
+  run tfenv-version-file
+  assert_success "${TFENV_TEST_DIR}/.terraform-version"
 }
 
 @test "topmost file has precedence" {
-  create_file ".ruby-version"
-  create_file "project/.ruby-version"
+  create_file ".terraform-version"
+  create_file "project/.terraform-version"
   cd project
-  run rbenv-version-file
-  assert_success "${RBENV_TEST_DIR}/project/.ruby-version"
+  run tfenv-version-file
+  assert_success "${TFENV_TEST_DIR}/project/.terraform-version"
 }
 
-@test "RBENV_DIR has precedence over PWD" {
-  create_file "widget/.ruby-version"
-  create_file "project/.ruby-version"
+@test "TFENV_DIR has precedence over PWD" {
+  create_file "widget/.terraform-version"
+  create_file "project/.terraform-version"
   cd project
-  RBENV_DIR="${RBENV_TEST_DIR}/widget" run rbenv-version-file
-  assert_success "${RBENV_TEST_DIR}/widget/.ruby-version"
+  TFENV_DIR="${TFENV_TEST_DIR}/widget" run tfenv-version-file
+  assert_success "${TFENV_TEST_DIR}/widget/.terraform-version"
 }
 
-@test "PWD is searched if RBENV_DIR yields no results" {
+@test "PWD is searched if TFENV_DIR yields no results" {
   mkdir -p "widget/blank"
-  create_file "project/.ruby-version"
+  create_file "project/.terraform-version"
   cd project
-  RBENV_DIR="${RBENV_TEST_DIR}/widget/blank" run rbenv-version-file
-  assert_success "${RBENV_TEST_DIR}/project/.ruby-version"
+  TFENV_DIR="${TFENV_TEST_DIR}/widget/blank" run tfenv-version-file
+  assert_success "${TFENV_TEST_DIR}/project/.terraform-version"
 }
 
 @test "finds version file in target directory" {
-  create_file "project/.ruby-version"
-  run rbenv-version-file "${PWD}/project"
-  assert_success "${RBENV_TEST_DIR}/project/.ruby-version"
+  create_file "project/.terraform-version"
+  run tfenv-version-file "${PWD}/project"
+  assert_success "${TFENV_TEST_DIR}/project/.terraform-version"
 }
 
 @test "fails when no version file in target directory" {
-  run rbenv-version-file "$PWD"
+  run tfenv-version-file "$PWD"
   assert_failure ""
 }

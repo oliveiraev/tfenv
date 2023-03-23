@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Summary: Display prefix for a Terraform version
+# Usage: tfenv prefix [<version>]
+#
+# Displays the directory where a Terraform version is installed. If no
+# version is given, `tfenv prefix' displays the location of the
+# currently selected version.
+
+set -e
+[ -n "$TFENV_DEBUG" ] && set -x
+
+# Provide tfenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec tfenv-versions --bare
+fi
+
+if [ -n "$1" ]; then
+  export TFENV_VERSION="$1"
+elif [ -z "$TFENV_VERSION" ]; then
+  TFENV_VERSION="$(tfenv-version-name)"
+fi
+
+if [ "$TFENV_VERSION" = "system" ]; then
+  if TERRAFORM_PATH="$(tfenv-which terraform)"; then
+    TERRAFORM_PATH="${TERRAFORM_PATH%/*}"
+    TFENV_PREFIX_PATH="${TERRAFORM_PATH%/bin}"
+    echo "${TFENV_PREFIX_PATH:-/}"
+    exit
+  else
+    echo "tfenv: system version not found in PATH" >&2
+    exit 1
+  fi
+fi
+
+TFENV_PREFIX_PATH="${TFENV_ROOT}/versions/${TFENV_VERSION}"
+if [ ! -d "$TFENV_PREFIX_PATH" ]; then
+  echo "tfenv: version \`${TFENV_VERSION}' not installed" >&2
+  exit 1
+fi
+
+echo "$TFENV_PREFIX_PATH"
